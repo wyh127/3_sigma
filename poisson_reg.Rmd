@@ -119,31 +119,13 @@ The result above shows that the model is already significant. It can be written 
 $$\log(\mu) = 0.39 - 4.7*10^{-4}*x$$
 
 It suggests there is a negative relationship between number of reviews and the price, which is legitimate since the more expensive, the less the guests and thus the less the number of reviews. We then try to compare the model with the saturated model using deviance. 
-```{r}
-# residual plots
-plot(poi_rates$fitted.values, poi_rates$residuals, cex=0.5, 
-     pch=16, ylim = c(-1, 10))
-
-# deviance
-plot(c(poi_rates$deviance, poi_rates_1$deviance, poi_rates_2$deviance), 
-     ylab = "deviance", xlab = "model", main = "deviance plot")
-lines(c(poi_rates$deviance, poi_rates_1$deviance, poi_rates_2$deviance))
-
-poi_sat <- glm(number_of_reviews~1, family=poisson, data=listings_summary)
-anova(poi_sat, poi, test = "Chisq")
-
-# goodness of fit test
-1-pchisq(poi$deviance, poi$df.residual)
-```
-The analysis of deviance also suggests that the p-value is small enough for us to accept the alternative that the number of reviews drops as the price increses. We then test the goodness-of-fit of our model, which however suggests there is a lack of fit. 
-
 
 ## More Covariates
 Next, we try to add more covariate into the above and perform the same pocedure, like the room type and minimum nights.
 ```{r}
 # poisson regression
 poi_rates_1 <- glm(number_of_reviews ~ price+room_type+offset(log(months)), 
-                   family = poisson, data=istings_summary)
+                   family = poisson, data=listings_summary)
 summary(poi_rates_1)
 hist(predict(poi_rates_1, type = "response"), xlab = "poi_1 predicted", 
      main = "hist")
@@ -166,6 +148,24 @@ var(predict(poi_rates_2, type = "response"))
 var(listings_summary$number_of_reviews)
 ```
 By comparing these models, we 
+
+```{r}
+# residual plots
+plot(poi_rates$fitted.values, poi_rates$residuals, cex=0.5, 
+     pch=16, ylim = c(-1, 10))
+
+# deviance
+plot(c(poi_rates$deviance, poi_rates_1$deviance, poi_rates_2$deviance), 
+     ylab = "deviance", xlab = "model", main = "deviance plot")
+lines(c(poi_rates$deviance, poi_rates_1$deviance, poi_rates_2$deviance))
+
+poi_sat <- glm(number_of_reviews~1, family=poisson, data=listings_summary)
+anova(poi_sat, poi_rates, test = "Chisq")
+
+# goodness of fit test
+1-pchisq(poi$deviance, poi_rates$df.residual)
+```
+The analysis of deviance also suggests that the p-value is small enough for us to accept the alternative that the number of reviews drops as the price increses. We then test the goodness-of-fit of our model, which however suggests there is a lack of fit. 
 
 
 ## Fitting quasi-poisson regression
