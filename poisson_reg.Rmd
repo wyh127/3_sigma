@@ -82,12 +82,20 @@ $$\mathbb{P}(y_i=k)=(1-\pi_i)e^{-\mu_i}\frac{\mu_i^k}{k!}$$
 ```{r}
 # load data
 listings_summary <- read.csv("data/listings_summary_dec18.csv")
-listings_summary <- listings_summary[6:16]
-listings_summary <- listings_summary[-8]
-hist(listings_summary$number_of_reviews, breaks = 100, xlim = c(0, 100), 
+#listings_summary <- listings_summary[6:16]
+#listings_summary <- listings_summary[-8]
+listings_cleansed <- read.csv("data/cleansed_listings_dec18.csv")
+listings_cleansed$months <- coalesce(listings_cleansed$number_of_reviews / listings_cleansed$reviews_per_month, as.numeric(strptime(listings_cleansed$last_scraped,format='%m/%d/%Y') - strptime(listings_cleansed$host_since,format='%m/%d/%Y')) / (365.25/12))
+# listings_cleansed$host_is_superhost2 <- ifelse(listings_cleansed$host_is_superhost=='t',1,0)
+listings_cleansed$rules_length <- length(listings_cleansed$house_rules)
+
+
+listings_joined <- left_join(listings_summary,listings_cleansed[,c('id','months','rules_length','security_deposit','instant_bookable','property_type')])
+
+hist(listings_joined$number_of_reviews, breaks = 100, xlim = c(0, 100), 
      xlab = "# of reviews", main = "histogram")
 
-plot(listings_summary$price, listings_summary$number_of_reviews, xlim = c(0, 1000), pch=16, 
+plot(listings_joined$price, listings_joined$number_of_reviews, xlim = c(0, 1000), pch=16, 
      cex=0.5, xlab = "price", ylab="# of reviews")
 ```
 
@@ -101,7 +109,10 @@ We first try to fit the simplest model, the Poisson regression model using numbe
 ```{r}
 library(ggplot2)
 library(glmnet)
+library(dplyr)
 listings_summary["months"] <- listings_summary$number_of_reviews/listings_summary$reviews_per_month
+# reviews_per_month is always NA when number of reviews is 0, but we actually want to use 0 as the rate
+listings_summary[is.na(listings_summary$reviews_per_month),'reviews_per_month'] <- 0
 
 # poisson regression
 poi_rates <- glm(number_of_reviews ~ price+offset(log(months)), family = poisson, 
@@ -159,8 +170,8 @@ plot(c(poi_rates$deviance, poi_rates_1$deviance, poi_rates_2$deviance),
      ylab = "deviance", xlab = "model", main = "deviance plot")
 lines(c(poi_rates$deviance, poi_rates_1$deviance, poi_rates_2$deviance))
 
-poi_sat <- glm(number_of_reviews~1, family=poisson, data=listings_summary)
-anova(poi_sat, poi_rates, test = "Chisq")
+#poi_sat <- glm(number_of_reviews~1, family=poisson, data=listings_summary)
+#anova(poi_sat, poi_rates, test = "Chisq")
 
 # goodness of fit test
 1-pchisq(poi$deviance, poi_rates$df.residual)
@@ -213,64 +224,6 @@ hist(predict(neg_bin_rates, type="response"))
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## fitting ZIP model
 ```{r}
 library(pscl)
@@ -293,21 +246,29 @@ zip_rates <- zeroinfl(r ~ p, offset = log(m))
 
 
 
+listings_summary[listings_summary$number_of_reviews]
 
+zip_rates <- zeroinfl(number_of_reviews ~ price+room_type+minimum_nights++offset(log(months)), data=listings_joined)
 
-zeroinfl(reviews_per_month ~ price, data=listings_summary)
+summary(zip_rates)
 
-summary(zip)
+hist(predict(zip_rates, type="response"))
 
-hist(predict(zip, type="response"))
+plot(zip_rates$fitted.values,zip_rates$residuals)
 
 zip_rates <- gam(number_of_reviews ~ price, family=ziP(), offset = log(months), 
-                 data=listings_summary)
+                 data=listings_joined)
 
 zip_rates <- gam(r ~ p, family=ziP(), offset = log(m))
 
 hist(predict(zip_rates, type="response"))
 summary(zip_rates)
+
+
+summary(listings_joined$number_of_reviews)
+log(listings_)
+
+max(listings_summary %>% group_by(id) %>% summarize(count=n()))
 ```
 
 
