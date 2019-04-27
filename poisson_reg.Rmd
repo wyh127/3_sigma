@@ -11,49 +11,47 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 # Introduction
-Generalized linear models (GLM) play a critical role in categorical data analysis. The Poisson regression model is one special GLM designed to deal with the count data. In our project, we are particularly interested in predicting the number of reviews for each Airbnb host in Melbourne, which can be regarded as a kind of count data and thus may be applied with the Poisson regression model. We will mainly focus on three kinds of models: Poisson regression model, quasi-Poisson regression model and the negative binomial regression model.
+Generalized linear model plays a critical role in categorical data analysis. And Poisson regression model is one special glm designed to deal with the count data. In our project, we are particularly interested in predicting the number of reviews for each Airbnb host in Melbourne, which can be regarded as a kind of count data and thus may be applied with the Poisson regression model. We will mainly focus on three kinds of models: Poisson regression model, quasi-Poisson regression model and the negative binomial regression model.
 
 ## Generalized linear model
-As the name suggests, GLM is a generalization of the traditional linear regression model. We can also say the classic linear regression model is a special case of the GLM when the random component is the normal distribution. More formally, we define the GLM as follows, which consists of 3 parts:
+As the name suggests, glm is one kind of generalization of the traditional linear regresion model. Or we can say the classic linear regression model is a special case of the glm when the random component is the normal distribution. More formally, we define the glm as follow, which consists of 3 parts:
 
-1. The distribution of the response is from the exponential distribution family, which means it has the form:
-  $$f(y_i| \theta_i) = a(y_i)b(\theta_i)exp(y_i\theta_i)$$
+1. The distribution of the response is from the exponential distribution family, which means it has the form: $f(y_i| \theta_i) = a(y_i)b(\theta_i)exp(y_i\theta_i)$
 
-2. The systematic component:
-  $$\eta_i=\Sigma_{i=1}^{p}\beta_ix_i$$
+2. The systenatic component: $\eta_i=\Sigma_{i=1}^{p}\beta_ix_i$
 
-3. A link function which links the systematic component and the mean of the response.
+3. A link fucntion which links the systematic component and the mean of the response.
 
 ## Poisson regression model
-As we have mentioned before, Poisson regresssion model is a special GLM. More specifically, when we assume the response has a Poisson distribution and the link function is the canonical link. Mathematically, we write the pdf of the response as:
+As we have mentioned before, Poisson regresssion model is a specila glm. More specifficaly, when we assume the response has a poisson distribution and the link function is the canonical link. Mathematically, we write the pdf of the response as:
 
-$$f(y_i| \mu_i) = e^{-\mu_i}\frac{\mu_i^{y_i}}{y_i!}$$
+$f(y_i| \mu_i) = e^{-\mu_i}\frac{\mu_i^{y_i}}{y_i!}$
 
 and the canonical link has the form :
 
-$$\eta_i = \log(\mu_i)$$
+$\eta_i = log(\mu_i)$
 
-And this is our Poisson regression model or log-linear model.
+And this is our Poisson regresion model or log-linear model.
 
 ## Poisson regression model for rates
-It is more natural for us to fit a Poisson regression model for rates than counts when taking the counts are performed over different periods. We thus begin by specifying a 
+It is more natural for us to fit a Poisson regression model for rates than counts when taking the counts are performed over different periods. And thus, it leads us to the following setting of the Poisson model for rates:
 
-$$\log(\mu_i/t_i) = \alpha+\beta*x_i$$
+$log(\mu_i/t_i) = \alpha+\beta*x_i$
 
 or 
 
-$$\log(\mu_i) = \alpha+\beta*x_i + \log(t_i)$$
+$log(\mu_i) = \alpha+\beta*x_i + log(t_i)$
 
-in which we call $\log(t_i)$ as offset. 
+in which we call $log(t_i)$ as offset. 
 
 ## Quasi-Poisson regression model
-Usually, Poisson regression model is simple and thus it has several drawbacks. One deficiency of Poisson regression model is that it can't deal with a phenomena called overdispersion. An overdispersion occurs when there the varaice of true response appears to be larger than that of the predicted response. Thus, it is natural for us to come up with more complicated model to tackle this issue. For example, we can use the quasi-poisson regression model. 
+Usually, Poisson regression model is simple and thus it has several drawbacks. One common deficit of Poisson regression model is that it cna't deal with a phenomena called overdispersion. An overdispersion occurs when there the varaice of true response apperae to be larger than that of the predicted response. Thus, it is natura for us to come up with more complicated model to tackle this issue. For example, we can use the quasi-poisson regression model. 
 
-To introduce the quasi-likelihood regression, we will briefly talk about the likelihood equation of the glm first. And more generally, we assume that our response is from the exponential dispersion family, which has the form: $f(y_i|\theta_i, \phi)=exp(\frac{y_i\theta_i-b(\theta_i)}{a(\phi)}+c(y_i, \phi))$. Then, the log-likelihood function is:
+To introduce the quasi-likelihood regression, we will briefly talk about the likelihhod equation of the glm first. And more generally, we assume that our response is from the exponential dispersion family here, which has the form: $f(y_i|\theta_i, \phi)=exp(\frac{y_i\theta_i-b(\theta_i)}{a(\phi)}+c(y_i, \phi))$. Then, the log-likeihood function is:
 
 $l = \Sigma_{i=1}^n\frac{y_i\theta_i-b(\theta_i)}{a(\phi)}+\Sigma_{i=1}^nc(y_i, \phi)$
 
-By taking derivative w.r.t $\beta$, the likelihood equation is:
+By taking derivative w.r.t $\beta$, the likelihhod equation is:
 
 $\Sigma_{i=1}^n \frac{(y_i-\mu_i)x_{ij}}{var(Y_i)} \frac{\partial\mu_i}{\partial\eta_i}=0, j =1, ..., p$.
 
@@ -61,33 +59,41 @@ Moreover, the likelihood equation for the POisson regression is:
 
 $\Sigma_{i=1}^n \frac{(y_i-\mu_i)x_{ij}}{\mu_i} \frac{\partial\mu_i}{\partial\eta_i}=0, j =1, ..., p$.
 
-For the quasi-Poisson regression, we change the above equation slightly by introducing the parameter $\phi$:
+For the quasi-Poisson regression, we change the above euqation slightly by introducing the parameter $\phi$:
 
 $\Sigma_{i=1}^n \frac{(y_i-\mu_i)x_{ij}}{\phi\mu_i} \frac{\partial\mu_i}{\partial\eta_i}=0, j =1, ..., p$.
 
-This is so-called quasi-Possion regression model.
+This is so-called quisi-Possion regression model.
 
 ## Negative binomial regression model
-Another option to deal with overdispersion is the negative binomial regression model. That's to say, we will assume the response has a negative binomial distribution. More specifically, if we assume the parameter $\mu$ for the Poisson distribution has a gamma distribution $\Gamma(r, \frac{1-p}{p})$, we can show that the posterior distribution is exactly a negative binomial distribution with parameter $r$ and $p$, $Y \sim NegBinom(r, p)$. 
+Another option to deal with the overdispersion issue is the negative binomail regression model. That's to say, we will assume the response has a negative binomail distribution. More specifically, if we assume the parameter $\mu$ for the poisson distribution has a gamma idstribution $\Gamma(r, \frac{1-p}{p})$, we can show that the posterior distribution is exactly a negative binomail distribution with parameter $r$ and $p$, $Y \sim NegBinom(r, p)$. 
 
-## Zero inflated Poisson regression model
-In real life, not all count data behaves exactly like a Poisson distribution. More often than not, it is common to see 0 overrepresented in the data which is called zero inflation, like what we encountered in our project. To take this into consideration, the zero inflated poisson regression or ZIP model was proposed. The idea is that we slightly change the response distribution by including an additional parameter $\pi_i$ called probability of extra zeros:
+## zero inflated poisson regresision model
+In real life, not all count data beahve exaclty like a poisson distribution. More often than not, it is common to see 0 takes a majority of the data which we call it zero inflation, like what we encountered in our project. To take this into consideration, people proposed teh zero inflated poisson regression or ZIP model. The idea is that we slightly change the response distribution by including an additional parameter $\pi_i$ called probability of extra zeros:
 
-$$\mathbb{P}(y_i=0)=\pi_i + (1-\pi_i)e^{-\mu_i}$$
+$\mathbb{P}(y_i=0)=\pi_i + (1-\pi_i)e^{-\mu_i}$,
 
-$$\mathbb{P}(y_i=k)=(1-\pi_i)e^{-\mu_i}\frac{\mu_i^k}{k!}$$
+$\mathbb{P}(y_i=k)=(1-\pi_i)e^{-\mu_i}\frac{\mu_i^k}{k!}$.
 
 
 # Exploratory data analysis
 ```{r}
 # load data
-listings_summary <- read.csv("data/listings_summary_dec18.csv")
-listings_summary <- listings_summary[6:16]
-listings_summary <- listings_summary[-8]
-hist(listings_summary$number_of_reviews, breaks = 100, xlim = c(0, 100), 
+setwd("~/Documents/5232_GLM/Project/3_sigma-master")
+data <- read.csv("listings_summary_dec18.csv")
+data <- data[6:16]
+data <- data[-8]
+library(bit64)
+library(data.table)
+c.dec18 <- fread("cleansed_listings_dec18.csv")
+dat <- c.dec18[, c("id", "city", "accommodates", "instant_bookable", "host_is_superhost", "is_location_exact", "bedrooms", "beds", "cancellation_policy", "host_since", "bed_type", 
+                   "cleaning_fee", "extra_people")]
+data <- merge(s.dec18, dat, by = "id")
+
+hist(data$number_of_reviews, breaks = 100, xlim = c(0, 100), 
      xlab = "# of reviews", main = "histogram")
 
-plot(listings_summary$price, listings_summary$number_of_reviews, xlim = c(0, 1000), pch=16, 
+plot(data$price, data$number_of_reviews, xlim = c(0, 1000), pch=16, 
      cex=0.5, xlab = "price", ylab="# of reviews")
 ```
 
@@ -97,39 +103,40 @@ plot(listings_summary$price, listings_summary$number_of_reviews, xlim = c(0, 100
 # Model building and fitting
 
 ## Poisson regression model
-We first try to fit the simplest model, the Poisson regression model using number of reviews as the response and price as the predictor. 
+We first try to fit the simplest model, the poisson regression model using number of reviews as the response and price as the predictor. 
 ```{r}
 library(ggplot2)
 library(glmnet)
-listings_summary["months"] <- listings_summary$number_of_reviews/listings_summary$reviews_per_month
+data$months <- data$number_of_reviews/data$reviews_per_month
 
 # poisson regression
-poi_rates <- glm(number_of_reviews ~ price+offset(log(months)), family = poisson, 
-                 data = listings_summary)
+poi_rates <- glm(number_of_reviews ~ price + offset(log(months)), family = poisson, 
+                 data = data)
 summary(poi_rates)
 hist(predict(poi_rates, type = "response"), xlab = "poi predicted", 
      main = "hist")
 
 # checking overdispersion 
 var(predict(poi_rates, type = "response"))
-var(listings_summary$number_of_reviews)
+var(data$number_of_reviews)
 ```
 The result above shows that the model is already significant. It can be written as:
 
-$$\log(\mu) = 0.39 - 4.7*10^{-4}*x$$
+$log(\mu) = 0.39 - 4.7*10^{-4}*x$.
 
 It suggests there is a negative relationship between number of reviews and the price, which is legitimate since the more expensive, the less the guests and thus the less the number of reviews. We then try to compare the model with the saturated model using deviance. 
+
 ```{r}
 # residual plots
 plot(poi_rates$fitted.values, poi_rates$residuals, cex=0.5, 
      pch=16, ylim = c(-1, 10))
 
 # deviance
-plot(c(poi_rates$deviance, poi_rates_1$deviance, poi_rates_2$deviance), 
-     ylab = "deviance", xlab = "model", main = "deviance plot")
-lines(c(poi_rates$deviance, poi_rates_1$deviance, poi_rates_2$deviance))
+#plot(c(poi_rates$deviance, poi_rates_1$deviance, poi_rates_2$deviance), 
+     #ylab = "deviance", xlab = "model", main = "deviance plot")
+#lines(c(poi_rates$deviance, poi_rates_1$deviance, poi_rates_2$deviance))
 
-poi_sat <- glm(number_of_reviews~1, family=poisson, data=listings_summary)
+poi_sat <- glm(number_of_reviews~1, family=poisson, data=data)
 anova(poi_sat, poi, test = "Chisq")
 
 # goodness of fit test
@@ -138,42 +145,44 @@ anova(poi_sat, poi, test = "Chisq")
 The analysis of deviance also suggests that the p-value is small enough for us to accept the alternative that the number of reviews drops as the price increses. We then test the goodness-of-fit of our model, which however suggests there is a lack of fit. 
 
 
-## More Covariates
+## more covariates
 Next, we try to add more covariate into the above and perform the same pocedure, like the room type and minimum nights.
 ```{r}
 # poisson regression
-poi_rates_1 <- glm(number_of_reviews ~ price+room_type+offset(log(months)), 
-                   family = poisson, data=istings_summary)
+poi_rates_1 <- glm(number_of_reviews ~ price+room_type+offset(log(months))  +availability_365 + neighbourhood, family = poisson, data = data)
 summary(poi_rates_1)
+
+
+
 hist(predict(poi_rates_1, type = "response"), xlab = "poi_1 predicted", 
      main = "hist")
 
 # checking overdispersion 
 var(predict(poi_rates_1, type = "response"))
-var(listings_summary$number_of_reviews)
+var(data$number_of_reviews)
 
 
 
 # poisson regression
 poi_rates_2 <- glm(number_of_reviews ~ price+room_type+minimum_nights+
-                     offset(log(months)), family = poisson, data = listings_summary)
+                     offset(log(months)), family = poisson, data = data)
 summary(poi_rates_2)
 hist(predict(poi_rates_2, type = "response"), xlab = "poi_1 predicted", 
      main = "hist")
 
 # checking overdispersion 
 var(predict(poi_rates_2, type = "response"))
-var(listings_summary$number_of_reviews)
+var(data$number_of_reviews)
 ```
 By comparing these models, we 
 
 
-## Fitting quasi-poisson regression
-In the previous analysis, we notice that there is more variability in the predicted response than the actual response, which suggests overdispersion in our data. We then try to fit the quasi-likelihood version Poisson regression model by introducing the dispersion parameter. 
+## fitting quasi-poisson regression
+In the previous analysis, we notice that there is more variabiity in the predicted response than the actual response, which suggests existence of overdisperison. And we then try to fit the quasi likelihood version poisson regression model by introducing the idspersion parameter. 
 ```{r}
-quasi_poi <- glm(number_of_reviews~price, family=quasipoisson, data=listings_summary)
+quasi_poi <- glm(number_of_reviews~price, family=quasipoisson, data=data)
 quasi_poi_rate <- glm(number_of_reviews~price+offset(log(months)), 
-                      family=quasipoisson, data=listings_summary)
+                      family=quasipoisson, data=data)
 
 summary(quasi_poi)
 hist(predict(quasi_poi_rate, type = "response"))
@@ -184,14 +193,14 @@ hist(predict(quasi_poi_rate, type = "response"))
 
 
 
-## Fitting negative binomial regression
+## fitting negative binomial regression
 
 Also, to deal with the problem of overdispersion, we can take advantage of the negative binomial regression model.
 ```{r}
 library(MASS)
-neg_bin <- glm.nb(number_of_reviews~price, data=listings_summary)
+neg_bin <- glm.nb(number_of_reviews~price, data=data)
 
-neg_bin_rates <- glm.nb(number_of_reviews~price+offset(log(months)), data=listings_summary)
+neg_bin_rates <- glm.nb(number_of_reviews~price+offset(log(months)), data=data)
 
 
 summary(neg_bin)
@@ -275,14 +284,14 @@ hist(predict(neg_bin_rates, type="response"))
 ```{r}
 library(pscl)
 library(mgcv)
-zip <- zeroinfl(number_of_reviews ~ price, data = listings_summary)
+zip <- zeroinfl(number_of_reviews ~ price, data = data)
 
 
 
-idx <- !is.na(listings_summary$months)
-m <- listings_summary$months[idx]
-r <- listings_summary$number_of_reviews[idx]
-p <- listings_summary$price[idx]
+idx <- !is.na(data$months)
+m <- data$months[idx]
+r <- data$number_of_reviews[idx]
+p <- data$price[idx]
 
 idx1 <- m != 1
 m <- m[idx1]
@@ -295,19 +304,30 @@ zip_rates <- zeroinfl(r ~ p, offset = log(m))
 
 
 
-zeroinfl(reviews_per_month ~ price, data=listings_summary)
+zeroinfl(number_of_reviews ~ price + room_type, data=data)
 
 summary(zip)
 
 hist(predict(zip, type="response"))
 
 zip_rates <- gam(number_of_reviews ~ price, family=ziP(), offset = log(months), 
-                 data=listings_summary)
+                 data=data)
 
 zip_rates <- gam(r ~ p, family=ziP(), offset = log(m))
 
 hist(predict(zip_rates, type="response"))
 summary(zip_rates)
+```
+
+```{r}
+m <- glm(number_of_reviews ~ price + offset(log(months)) + instant_bookable +   is_location_exact + bedrooms + beds + cancellation_policy  + availability_365 + cleaning_fee + bed_type , family = poisson, data = data)
+summary(m)
+step(m, direction = "both")
+
+
+m2 <- glm.nb(number_of_reviews ~ price + availability_365 + bedrooms + instant_bookable + beds + is_location_exact + calculated_host_listings_count + cleaning_fee + bed_type, data = data)
+
+summary(m2)
 ```
 
 
