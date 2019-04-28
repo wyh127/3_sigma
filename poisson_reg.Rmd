@@ -79,7 +79,7 @@ $\mathbb{P}(y_i=k)=(1-\pi_i)e^{-\mu_i}\frac{\mu_i^k}{k!}$.
 # Exploratory data analysis
 ```{r}
 # load data
-data <- read.csv("data/listings_summary_dec18.csv")
+data <- read.csv("listings_summary_dec18.csv")
 data <- data[6:16]
 data <- data[-8]
 hist(data$number_of_reviews, breaks = 100, xlim = c(0, 100), 
