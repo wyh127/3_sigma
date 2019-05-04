@@ -1,0 +1,293 @@
+---
+title: "poisson_reg"
+author: "3 sigma"
+date: "4/18/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(dplyr)
+```
+
+
+# Introduction
+Generalized linear model plays a critical role in categorical data analysis. And Poisson regression model is one special glm designed to deal with the count data. In our project, we are particularly interested in predicting the number of reviews for each Airbnb host in Melbourne, which can be regarded as a kind of count data and thus may be applied with the Poisson regression model. We will mainly focus on three kinds of models: Poisson regression model, quasi-Poisson regression model and the negative binomial regression model.
+
+## Generalized linear model
+As the name suggests, glm is one kind of generalization of the traditional linear regresion model. Or we can say the classic linear regression model is a special case of the glm when the random component is the normal distribution. More formally, we define the glm as follow, which consists of 3 parts:
+
+1. The distribution of the response is from the exponential distribution family, which means it has the form: $f(y_i| \theta_i) = a(y_i)b(\theta_i)exp(y_i\theta_i)$
+
+2. The systenatic component: $\eta_i=\Sigma_{i=1}^{p}\beta_ix_i$
+
+3. A link fucntion which links the systematic component and the mean of the response.
+
+## Poisson regression model
+As we have mentioned before, Poisson regresssion model is a specila glm. More specifficaly, when we assume the response has a poisson distribution and the link function is the canonical link. Mathematically, we write the pdf of the response as:
+
+$$f(y_i| \mu_i) = e^{-\mu_i}\frac{\mu_i^{y_i}}{y_i!}$$
+
+and the canonical link has the form :
+
+$$\eta_i = \log(\mu_i)$$
+
+And this is our Poisson regresion model or log-linear model.
+
+## Poisson regression model for rates
+It is more natural for us to fit a Poisson regression model for rates than counts when taking the counts are performed over different periods. And thus, it leads us to the following setting of the Poisson model for rates:
+
+$$\log(\mu_i/t_i) = \alpha+\beta*x_i$$
+
+or 
+
+$$\log(\mu_i) = \alpha+\beta*x_i + log(t_i)$$
+
+in which we call $\log(t_i)$ as offset.
+
+## Quasi-Poisson regression model
+Usually, Poisson regression model is simple and thus it has several drawbacks. One common deficit of Poisson regression model is that it cna't deal with a phenomena called overdispersion. An overdispersion occurs when there the varaice of true response apperae to be larger than that of the predicted response. Thus, it is natura for us to come up with more complicated model to tackle this issue. For example, we can use the quasi-poisson regression model. 
+
+To introduce the quasi-likelihood regression, we will briefly talk about the likelihhod equation of the glm first. And more generally, we assume that our response is from the exponential dispersion family here, which has the form: $f(y_i|\theta_i, \phi)=exp(\frac{y_i\theta_i-b(\theta_i)}{a(\phi)}+c(y_i, \phi))$. Then, the log-likeihood function is:
+
+$$l = \Sigma_{i=1}^n\frac{y_i\theta_i-b(\theta_i)}{a(\phi)}+\Sigma_{i=1}^nc(y_i, \phi)$$
+
+By taking derivative w.r.t $\beta$, the likelihhod equation is:
+
+$$\Sigma_{i=1}^n \frac{(y_i-\mu_i)x_{ij}}{var(Y_i)} \frac{\partial\mu_i}{\partial\eta_i}=0, j =1, ..., p$$.
+
+Moreover, the likelihood equation for the POisson regression is:
+
+$$\Sigma_{i=1}^n \frac{(y_i-\mu_i)x_{ij}}{\mu_i} \frac{\partial\mu_i}{\partial\eta_i}=0, j =1, ..., p$$.
+
+For the quasi-Poisson regression, we change the above euqation slightly by introducing the parameter $\phi$:
+
+$$\Sigma_{i=1}^n \frac{(y_i-\mu_i)x_{ij}}{\phi\mu_i} \frac{\partial\mu_i}{\partial\eta_i}=0, j =1, ..., p$$.
+
+This is so-called quisi-Possion regression model.
+
+## Negative binomial regression model
+Another option to deal with the overdispersion issue is the negative binomail regression model. That's to say, we will assume the response has a negative binomail distribution. More specifically, if we assume the parameter $\mu$ for the poisson distribution has a gamma idstribution $\Gamma(r, \frac{1-p}{p})$, we can show that the posterior distribution is exactly a negative binomail distribution with parameter $r$ and $p$, $Y \sim NegBinom(r, p)$. 
+
+## zero inflated poisson regresision model
+In real life, not all count data beahve exaclty like a poisson distribution. More often than not, it is common to see 0 takes a majority of the data which we call it zero inflation, like what we encountered in our project. To take this into consideration, people proposed teh zero inflated poisson regression or ZIP model. The idea is that we slightly change the response distribution by including an additional parameter $\pi_i$ called probability of extra zeros:
+
+$$\mathbb{P}(y_i=0)=\pi_i + (1-\pi_i)e^{-\mu_i}$$,
+
+$$\mathbb{P}(y_i=k)=(1-\pi_i)e^{-\mu_i}\frac{\mu_i^k}{k!}$$.
+
+
+# Exploratory data analysis
+```{r}
+# load data
+setwd("~/Documents/5232_GLM/Project/3_sigma-master")
+listings_summary <- read.csv("listings_summary_dec18.csv")
+#listings_summary <- listings_summary[6:16]
+#listings_summary <- listings_summary[-8]
+listings_cleansed <- read.csv("cleansed_listings_dec18.csv")
+
+listings_cleansed$months <- coalesce(listings_cleansed$number_of_reviews/listings_cleansed$reviews_per_month, as.numeric(strptime(listings_cleansed$last_scraped,format='%m/%d/%Y')-strptime(listings_cleansed$host_since, format='%m/%d/%Y')) / (365.25/12))
+
+# listings_cleansed$host_is_superhost2 <- ifelse(listings_cleansed$host_is_superhost=='t',1,0)
+listings_cleansed$rules_length <- length(listings_cleansed$house_rules)
+
+listings_joined <- left_join(listings_summary, listings_cleansed[, c('id','months','rules_length','security_deposit','instant_bookable','property_type', 'bed_type', 'bedrooms', 'beds', 'cleaning_fee')])
+
+# hist of number_of_reviews
+hist(listings_joined$number_of_reviews, breaks = 100, xlim = c(0, 100), 
+     xlab = "# of reviews", main = "# of reviews hist")
+
+# number_of_reviews vs price
+plot(listings_joined$price, listings_joined$number_of_reviews, xlim = c(0, 1000), pch=16, 
+     cex=0.5, xlab = "price", ylab="# of reviews")
+```
+
+
+
+
+# Model building and inference
+
+## Poisson regression model
+We start with fitting the simplest and also the most fundamental model: poisson regression model, which uses number of reviews as the response and price as the predictor. 
+```{r}
+library(glmnet)
+
+# poisson regression for rates
+poi_rates <- glm(number_of_reviews ~ price+offset(log(months)), family = poisson, 
+                 data = listings_joined)
+summary(poi_rates)
+hist(predict(poi_rates, type = "response"), xlab = "poi predicted", 
+     main = "hist")
+
+# checking overdispersion 
+var(predict(poi_rates, type = "response"))
+var(listings_joined$number_of_reviews)
+```
+The result above shows that the model is already significant. It can be written as:
+
+$$\log(\mu) = 0.39 - 4.7*10^{-4}*x$$.
+
+It suggests there is a negative relationship between number of reviews and the price, which is legitimate since the more expensive, the less the guests and thus the less the number of reviews. We then plot the residuals against the fitted value and conduct the goodness of fit test.
+```{r}
+# saturated model
+poi_sat <- glm(number_of_reviews~1+offset(log(months)), family=poisson, data=listings_joined)
+
+# analysis of deviance testing model significance
+anova(poi_sat, poi_rates, test = "Chisq")
+
+# residual plots
+plot(poi_rates$fitted.values, poi_rates$residuals, cex=0.5, 
+     pch=16, ylim = c(-1, 15))
+
+# goodness of fit test
+1-pchisq(poi_rates$deviance, poi_rates$df.residual)
+```
+The analysis of deviance also suggests that the p-value is small enough for us to accept the alternative that the number of reviews drops as the price increses. We then test the goodness-of-fit of our model, which however suggests there is a lack of fit.
+
+
+## more covariates
+Next, we try to add more covariate into the above and perform the same pocedure, like the room type and minimum nights. We also try to compare models with the saturated model using deviance. 
+```{r}
+# poisson regression 1
+poi_rates_1 <- glm(number_of_reviews ~ price+availability_365+offset(log(months)), 
+                   family = poisson, data = listings_joined)
+# summary(poi_rates_1)
+hist(predict(poi_rates_1, type = "response"), xlab = "poi_1 predicted", 
+     main = "hist")
+
+# goodness of fit test for 1
+1-pchisq(poi_rates_1$deviance, poi_rates_1$df.residual)
+
+# poisson regression 2
+poi_rates_2 <- glm(number_of_reviews ~ price+availability_365+instant_bookable+
+                     offset(log(months)), family = poisson, data = listings_joined)
+# summary(poi_rates_2)
+hist(predict(poi_rates_2, type = "response"), xlab = "poi_2 predicted", 
+     main = "hist")
+
+# goodness of fit test for 2
+1-pchisq(poi_rates_2$deviance, poi_rates_2$df.residual)
+
+# model deviance comparison
+plot(c(poi_sat$deviance, poi_rates$deviance, poi_rates_1$deviance, poi_rates_2$deviance), 
+     ylab = "deviance", xlab = "models", main = "deviance plot")
+lines(c(poi_sat$deviance, poi_rates$deviance, poi_rates_1$deviance, poi_rates_2$deviance))
+
+# model deviance comparison
+plot(c(poi_sat$aic, poi_rates$aic, poi_rates_1$aic, poi_rates_2$aic), 
+     ylab = "AIC", xlab = "models", main = "AIC plot")
+lines(c(poi_sat$aic, poi_rates$aic, poi_rates_1$aic, poi_rates_2$aic))
+
+# checking overdispersion 
+print("observed variance:")
+print(var(listings_joined$number_of_reviews))
+print("predicted variance:")
+print(var(predict(poi_rates_2, type = "response")))
+```
+By comparing these models, we ...
+
+
+## fitting quasi-poisson regression
+In the previous analysis, we notice that there is more variabiity in the predicted response than the actual response, which suggests existence of overdisperison. And we then try to fit the quasi likelihood version poisson regression model by introducing the idspersion parameter.
+```{r}
+quasi_poi_rate <- glm(number_of_reviews~price+availability_365+instant_bookable
+                      +offset(log(months)), 
+                      family=quasipoisson, data=listings_joined)
+
+summary(quasi_poi_rate)
+
+
+plot(quasi_poi_rate$fitted.values, quasi_poi_rate$residuals, ylim = c(-1, 15), pch=16, cex=0.4,
+     xlab = "fitted value", ylab = "residual", main = "quasi poisson")
+
+hist(predict(quasi_poi_rate, type="response"), xlab = "predicted", main = "quasi poisson")
+
+# goodness of fit
+1-pchisq(quasi_poi_rate$deviance, quasi_poi_rate$df.residual)
+```
+
+
+
+## fitting negative binomial regression
+
+Also, to deal with the problem of overdispersion, we can take advantage of the negative binomial regression model.
+```{r}
+library(MASS)
+
+neg_bin_rates <- glm.nb(number_of_reviews ~ price + availability_365 + instant_bookable + offset(log(months)), data=listings_joined, init.theta = 0.1)
+summary(neg_bin_rates)
+
+plot(neg_bin_rates$fitted.values, neg_bin_rates$residuals, ylim = c(-1, 10), pch=16, cex=0.4,
+     xlab = "fitted value", ylab = "residual", main = "negative binomial")
+
+hist(predict(neg_bin_rates, type="response"), xlab = "predicted", main = "negative binomial")
+
+var(predict(neg_bin_rates, type = "response"))
+var(listings_joined$number_of_reviews)
+
+1-pchisq(neg_bin_rates$deviance, neg_bin_rates$df.residual)
+```
+
+
+
+
+
+## fitting ZIP model
+```{r}
+library(pscl)
+
+zip_rates <- zeroinfl(number_of_reviews ~ price+offset(log(months)),
+                      data=listings_joined)
+
+zip_rates_1 <- zeroinfl(number_of_reviews~price+availability_365+instant_bookable+
+                          offset(log(months)), data=listings_joined)
+
+zip_rates_2<- zeroinfl(number_of_reviews~price+availability_365+instant_bookable+
+                          offset(log(months)), dist = "negbin",data=listings_joined)
+summary(zip_rates_1)
+
+plot(zip_rates$fitted.values, zip_rates$residuals, pch=16, cex=0.5, 
+     ylab="residuals", xlab="fitted value", main = "zero inflated model")
+
+plot(zip_rates_1$fitted.values, zip_rates$residuals, pch=16, cex=0.5, 
+     ylab="residuals", xlab="fitted value", main = "zero inflated model")
+
+hist(predict(zip_rates_1,type="response")*sapply(1-predict(zip_rates_1,type="zero"),rbinom,n=1,size=1), breaks = 100,xlim = c(0,100))
+
+
+summary(zip_rates_1)
+zip_rates_1$df.residual
+
+vuong(zip_rates_1, zip_rates_2)
+
+
+var(predict(zip_rates_1, type = "response"))
+var(listings_joined$number_of_reviews)
+
+
+
+
+```
+
+# conclusion
+
+
+```{r}
+sum(listings_joined$number_of_reviews == 0)
+sum(exp(-fitted(poi_rates_2)))
+
+
+sum(exp(-predict(poi_rates_2, type = "response")))
+sum(exp(-predict(zip_rates_1, type = "response"))) + sum(predict(zip_rates_1, type = "zero"))
+sum(exp(-predict(neg_bin_rates, type = "response")))
+sum(exp(-predict(quasi_poi_rate, type = "response")))
+
+
+# model comparing 
+vuong(poi_rates_2, neg_bin_rates)
+vuong(zip_rates_1, neg_bin_rates)
+vuong(zip_rates_2, neg_bin_rates)
+vuong(zip_rates_1, zip_rates_2)
+vuong(zip_rates_2, poi_rates_2)
+```
+
