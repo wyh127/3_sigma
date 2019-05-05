@@ -282,12 +282,20 @@ sum(exp(-predict(zip_rates_1, type = "response"))) + sum(predict(zip_rates_1, ty
 sum(exp(-predict(neg_bin_rates, type = "response")))
 sum(exp(-predict(quasi_poi_rate, type = "response")))
 
+sum(exp(-predict(zip_rates_2, type = "response"))) + sum(predict(zip_rates_2, type = "zero"))
+
+sd(predict(poi_rates_2, type = "response"))
+sd(predict(zip_rates_1,type="response")*sapply(1-predict(zip_rates_1,type="zero"),rbinom,n=1,size=1))
+sd(predict(zip_rates_2,type="response")*sapply(1-predict(zip_rates_2,type="zero"),rbinom,n=1,size=1))
+sd(predict(zip_rates_1,type="response"))
+sd(predict(zip_rates_2,type="response"))
+mean(predict(neg_bin_rates, type = "response"))
 
 # model comparing 
 vuong(poi_rates_2, neg_bin_rates)
+vuong(zip_rates_2, poi_rates_2)
 vuong(zip_rates_1, neg_bin_rates)
 vuong(zip_rates_2, neg_bin_rates)
 vuong(zip_rates_1, zip_rates_2)
-vuong(zip_rates_2, poi_rates_2)
 ```
 
