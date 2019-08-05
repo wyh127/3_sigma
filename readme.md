@@ -1,1 +1,1 @@
-This is a readme for this project
+This is the project for the GLM course.
